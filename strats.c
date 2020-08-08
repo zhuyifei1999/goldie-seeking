@@ -60,6 +60,18 @@ static enum gen_res gen_tree(int idx) {
 			if (num_possible[idx] == 2 && eliminated[idx][gusher])
 				continue;
 
+			if (eliminated[idx][gusher]) {
+				bool adj = false;
+				for_gusher(n_gusher)
+					if (!eliminated[idx][n_gusher] &&
+					    is_connected(n_gusher, gusher))
+						adj = true;
+
+				if (!adj)
+					continue;
+			}
+
+
 			cur_tree[idx] = gusher;
 			path_visited[gusher] = true;
 			for_gusher(n_gusher) {
@@ -106,6 +118,17 @@ static enum gen_res gen_tree(int idx) {
 
 			if (num_possible[idx] == 2 && eliminated[idx][gusher])
 				continue;
+
+			if (eliminated[idx][gusher]) {
+				bool adj = false;
+				for_gusher(n_gusher)
+					if (!eliminated[idx][n_gusher] &&
+					    is_connected(n_gusher, gusher))
+						adj = true;
+
+				if (!adj)
+					continue;
+			}
 
 			cur_tree[idx] = gusher;
 			path_visited[gusher] = true;
