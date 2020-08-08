@@ -13,9 +13,8 @@ bool connects[MAX_GUSHERS * MAX_GUSHERS];
 #define TREE_SIZE (1 << MAX_GUSHERS)
 char cur_tree[TREE_SIZE];
 bool eliminated[TREE_SIZE][MAX_GUSHERS];
+char num_possible[TREE_SIZE];
 bool path_visited[MAX_GUSHERS];
-
-
 
 #define for_gusher(gusher) for (char gusher = 0; gusher < num_gushers; gusher++)
 
@@ -33,16 +32,30 @@ enum gen_res gen_tree(int idx) {
 	int hi_idx = lo_idx + 1;
 
 	if (cur_tree[idx] == MAX_GUSHERS) {
+		char possible_gusher;
+
+		num_possible[idx] = 0;
 		for_gusher(gusher) {
-			if (!eliminated[idx][gusher])
-				goto possible;
+			if (!eliminated[idx][gusher]) {
+				num_possible[idx]++;
+				possible_gusher = gusher;
+			}
 		}
 
-		return IMPOSSIBLE;
+		if (!num_possible[idx])
+			return IMPOSSIBLE;
 
-possible:
+		if (num_possible[idx] == 1) {
+			cur_tree[idx] = possible_gusher;
+			cur_tree[lo_idx] = cur_tree[hi_idx] = MAX_GUSHERS;
+			return FOUND_NEXT;
+		}
+
 		for_gusher(gusher) {
 			if (path_visited[gusher])
+				continue;
+
+			if (num_possible[idx] == 2 && eliminated[idx][gusher])
 				continue;
 
 			cur_tree[idx] = gusher;
@@ -70,17 +83,26 @@ possible:
 
 		assert(false);
 	} else {
+		if (num_possible[idx] == 1)
+			return IMPOSSIBLE;
+
 		path_visited[cur_tree[idx]] = true;
 
 		if (gen_tree(lo_idx) == FOUND_NEXT)
 			goto inner_found_next;
-		if (gen_tree(hi_idx) == FOUND_NEXT)
+		if (gen_tree(hi_idx) == FOUND_NEXT) {
+			cur_tree[lo_idx] = MAX_GUSHERS;
+			gen_tree(lo_idx);
 			goto inner_found_next;
+		}
 
 		path_visited[cur_tree[idx]] = false;
 
 		for_gusher(gusher) {
 			if (path_visited[gusher] || gusher <= cur_tree[idx])
+				continue;
+
+			if (num_possible[idx] == 2 && eliminated[idx][gusher])
 				continue;
 
 			cur_tree[idx] = gusher;
@@ -112,6 +134,32 @@ inner_found_next:
 		path_visited[cur_tree[idx]] = false;
 		return FOUND_NEXT;
 	}
+}
+
+void print_tree(int idx) {
+	int lo_idx = idx * 2;
+	int hi_idx = lo_idx + 1;
+
+	if (cur_tree[idx] == MAX_GUSHERS)
+		return;
+
+	printf("%c", names[cur_tree[idx]]);
+
+	if (eliminated[idx][cur_tree[idx]])
+		printf("*");
+
+	if (cur_tree[lo_idx] == MAX_GUSHERS && cur_tree[hi_idx] == MAX_GUSHERS)
+		return;
+
+	printf("(");
+
+	print_tree(hi_idx);
+
+	printf(",");
+
+	print_tree(lo_idx);
+
+	printf(")");
 }
 
 int main(int argc, char *argv[]) {
@@ -151,8 +199,12 @@ int main(int argc, char *argv[]) {
 	memset(cur_tree, MAX_GUSHERS, 1 << (num_gushers + 1));
 
 	int cnt = 0;
-	while (gen_tree(1) == FOUND_NEXT) cnt++;
-	printf("%d\n", cnt);
+	while (gen_tree(1) == FOUND_NEXT) {
+		cnt++;
+		printf("%d: ", cnt);
+		print_tree(1);
+		printf("\n");
+	}
 
 	return 0;
 }
