@@ -1,3 +1,4 @@
+#include <math.h>
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -17,6 +18,9 @@ static char num_possible[TREE_SIZE];
 static bool path_visited[MAX_GUSHERS];
 
 static int current_cost;
+static int num_exits;
+static float avg_penalty;
+static float current_var;
 
 #define for_gusher(gusher) for (char gusher = 0; gusher < num_gushers; gusher++)
 
@@ -168,12 +172,29 @@ static void compute_cost(int idx, int penalty) {
 	if (cur_tree[idx] == MAX_GUSHERS)
 		return;
 
-	if (!eliminated[idx][cur_tree[idx]])
+	if (!eliminated[idx][cur_tree[idx]]) {
 		current_cost += penalty;
+		num_exits++;
+	}
 
 	penalty += penalties[cur_tree[idx]];
 	compute_cost(lo_idx, penalty);
 	compute_cost(hi_idx, penalty);
+}
+
+static void compute_var(int idx, int penalty) {
+	int lo_idx = idx * 2;
+	int hi_idx = lo_idx + 1;
+
+	if (cur_tree[idx] == MAX_GUSHERS)
+		return;
+
+	if (!eliminated[idx][cur_tree[idx]])
+		current_var += (penalty - avg_penalty) * (penalty - avg_penalty);
+
+	penalty += penalties[cur_tree[idx]];
+	compute_var(lo_idx, penalty);
+	compute_var(hi_idx, penalty);
 }
 
 static void print_tree(int idx) {
@@ -243,9 +264,14 @@ int main(int argc, char *argv[]) {
 		cnt++;
 		print_tree(1);
 
-		current_cost = 0;
+		current_cost = current_var = num_exits = 0;
 		compute_cost(1, 0);
-		printf(": %d\n", current_cost);
+
+		assert(num_exits == num_gushers);
+		avg_penalty = (float)current_cost / num_gushers;
+		compute_var(1, 0);
+
+		printf(": %d %.02f\n", current_cost, sqrt(current_var / num_gushers));
 	}
 
 	return 0;
