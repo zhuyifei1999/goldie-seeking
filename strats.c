@@ -5,16 +5,18 @@
 #include <string.h>
 
 #define MAX_GUSHERS 10
-int num_gushers;
-char names[MAX_GUSHERS];
-int penalties[MAX_GUSHERS];
-bool connects[MAX_GUSHERS * MAX_GUSHERS];
+static int num_gushers;
+static char names[MAX_GUSHERS];
+static int penalties[MAX_GUSHERS];
+static bool connects[MAX_GUSHERS * MAX_GUSHERS];
 
 #define TREE_SIZE (1 << MAX_GUSHERS)
-char cur_tree[TREE_SIZE];
-bool eliminated[TREE_SIZE][MAX_GUSHERS];
-char num_possible[TREE_SIZE];
-bool path_visited[MAX_GUSHERS];
+static char cur_tree[TREE_SIZE];
+static bool eliminated[TREE_SIZE][MAX_GUSHERS];
+static char num_possible[TREE_SIZE];
+static bool path_visited[MAX_GUSHERS];
+
+static int current_cost;
 
 #define for_gusher(gusher) for (char gusher = 0; gusher < num_gushers; gusher++)
 
@@ -23,11 +25,11 @@ enum gen_res {
 	IMPOSSIBLE,
 };
 
-bool is_connected(char x, char y) {
+static bool is_connected(char x, char y) {
 	return connects[x * num_gushers + y];
 }
 
-enum gen_res gen_tree(int idx) {
+static enum gen_res gen_tree(int idx) {
 	int lo_idx = idx * 2;
 	int hi_idx = lo_idx + 1;
 
@@ -136,7 +138,22 @@ inner_found_next:
 	}
 }
 
-void print_tree(int idx) {
+static void compute_cost(int idx, int penalty) {
+	int lo_idx = idx * 2;
+	int hi_idx = lo_idx + 1;
+
+	if (cur_tree[idx] == MAX_GUSHERS)
+		return;
+
+	if (!eliminated[idx][cur_tree[idx]])
+		current_cost += penalty;
+
+	penalty += penalties[cur_tree[idx]];
+	compute_cost(lo_idx, penalty);
+	compute_cost(hi_idx, penalty);
+}
+
+static void print_tree(int idx) {
 	int lo_idx = idx * 2;
 	int hi_idx = lo_idx + 1;
 
@@ -203,7 +220,10 @@ int main(int argc, char *argv[]) {
 		cnt++;
 		printf("%d: ", cnt);
 		print_tree(1);
-		printf("\n");
+
+		current_cost = 0;
+		compute_cost(1, 0);
+		printf(": %d\n", current_cost);
 	}
 
 	return 0;
