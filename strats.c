@@ -65,16 +65,19 @@ static enum gen_res gen_tree(int idx) {
 				continue;
 
 			if (eliminated[idx][gusher]) {
-				bool adj = false;
+				bool adj_l = false;
+				bool adj_nl = false;
 				for_gusher(n_gusher)
-					if (!eliminated[idx][n_gusher] &&
-					    is_connected(n_gusher, gusher))
-						adj = true;
+					if (!eliminated[idx][n_gusher]) {
+						if (is_connected(n_gusher, gusher))
+							adj_l = true;
+						else
+							adj_nl = true;
+					}
 
-				if (!adj)
+				if (!adj_l || !adj_nl)
 					continue;
 			}
-
 
 			cur_tree[idx] = gusher;
 			path_visited[gusher] = true;
@@ -124,13 +127,17 @@ static enum gen_res gen_tree(int idx) {
 				continue;
 
 			if (eliminated[idx][gusher]) {
-				bool adj = false;
+				bool adj_l = false;
+				bool adj_nl = false;
 				for_gusher(n_gusher)
-					if (!eliminated[idx][n_gusher] &&
-					    is_connected(n_gusher, gusher))
-						adj = true;
+					if (!eliminated[idx][n_gusher]) {
+						if (is_connected(n_gusher, gusher))
+							adj_l = true;
+						else
+							adj_nl = true;
+					}
 
-				if (!adj)
+				if (!adj_l || !adj_nl)
 					continue;
 			}
 
