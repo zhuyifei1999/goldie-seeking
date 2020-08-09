@@ -15,6 +15,7 @@ static bool connects[MAX_GUSHERS * MAX_GUSHERS];
 static char cur_tree[TREE_SIZE];
 static bool eliminated[TREE_SIZE][MAX_GUSHERS];
 static char num_possible[TREE_SIZE];
+static bool impossible[TREE_SIZE];
 static bool path_visited[MAX_GUSHERS];
 
 static int current_cost;
@@ -37,6 +38,9 @@ static enum gen_res gen_tree(int idx) {
 	int lo_idx = idx * 2;
 	int hi_idx = lo_idx + 1;
 
+	if (impossible[idx])
+		return IMPOSSIBLE;
+
 	if (cur_tree[idx] == MAX_GUSHERS) {
 		char possible_gusher;
 
@@ -49,7 +53,7 @@ static enum gen_res gen_tree(int idx) {
 		}
 
 		if (!num_possible[idx])
-			return IMPOSSIBLE;
+			goto impossible;
 
 		if (num_possible[idx] == 1) {
 			cur_tree[idx] = possible_gusher;
@@ -91,6 +95,7 @@ static enum gen_res gen_tree(int idx) {
 				}
 			}
 			cur_tree[lo_idx] = cur_tree[hi_idx] = MAX_GUSHERS;
+			impossible[lo_idx] = impossible[hi_idx] = false;
 
 			gen_tree(lo_idx);
 			gen_tree(hi_idx);
@@ -102,7 +107,7 @@ static enum gen_res gen_tree(int idx) {
 		assert(false);
 	} else {
 		if (num_possible[idx] == 1)
-			return IMPOSSIBLE;
+			goto impossible;
 
 		path_visited[cur_tree[idx]] = true;
 
@@ -110,6 +115,7 @@ static enum gen_res gen_tree(int idx) {
 			goto inner_found_next;
 		if (gen_tree(hi_idx) == FOUND_NEXT) {
 			cur_tree[lo_idx] = MAX_GUSHERS;
+			impossible[lo_idx] = false;
 			gen_tree(lo_idx);
 			goto inner_found_next;
 		}
@@ -150,6 +156,7 @@ static enum gen_res gen_tree(int idx) {
 				}
 			}
 			cur_tree[lo_idx] = cur_tree[hi_idx] = MAX_GUSHERS;
+			impossible[lo_idx] = impossible[hi_idx] = false;
 
 			gen_tree(lo_idx);
 			gen_tree(hi_idx);
@@ -158,12 +165,16 @@ static enum gen_res gen_tree(int idx) {
 			return FOUND_NEXT;
 		}
 
-		return IMPOSSIBLE;
+		goto impossible;
 
 inner_found_next:
 		path_visited[cur_tree[idx]] = false;
 		return FOUND_NEXT;
 	}
+
+impossible:
+	impossible[idx] = true;
+	return IMPOSSIBLE;
 }
 
 static void compute_cost(int idx, int penalty) {
