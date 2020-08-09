@@ -218,7 +218,6 @@ int main(int argc, char *argv[]) {
 	int cnt = 0;
 	while (gen_tree(1) == FOUND_NEXT) {
 		cnt++;
-		printf("%d: ", cnt);
 		print_tree(1);
 
 		current_cost = 0;
