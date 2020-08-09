@@ -61,9 +61,6 @@ static enum gen_res gen_tree(int idx) {
 			if (path_visited[gusher])
 				continue;
 
-			if (num_possible[idx] == 2 && eliminated[idx][gusher])
-				continue;
-
 			if (eliminated[idx][gusher]) {
 				bool adj_l = false;
 				bool adj_nl = false;
@@ -121,9 +118,6 @@ static enum gen_res gen_tree(int idx) {
 
 		for_gusher(gusher) {
 			if (path_visited[gusher] || gusher <= cur_tree[idx])
-				continue;
-
-			if (num_possible[idx] == 2 && eliminated[idx][gusher])
 				continue;
 
 			if (eliminated[idx][gusher]) {
